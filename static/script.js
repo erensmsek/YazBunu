@@ -132,9 +132,10 @@ function renderResults(data) {
   renderSegments(segmentsEl, data.segments);
   renderExportRow(exportOriginalEl, () => ({ text: data.text || "", segments: data.segments || [] }));
 
-  // Yeni transkriptte eski AI çıktılarını gizle.
+  // Yeni transkriptte eski AI çıktılarını gizle ve tek sütuna dön.
   summaryBlock.classList.add("is-hidden");
   polishBlock.classList.add("is-hidden");
+  resultsSection.classList.remove("has-ai");
   const hasText = Boolean((data.text || "").trim());
   summarizeBtn.disabled = !hasText;
   polishBtn.disabled = !hasText;
@@ -178,6 +179,7 @@ summarizeBtn.addEventListener("click", async () => {
     const summary = await callLLM("/summarize", "summary");
     summaryContent.innerHTML = renderMarkdown(summary || "");
     summaryBlock.classList.remove("is-hidden");
+    resultsSection.classList.add("has-ai");
     setStatus("Özet hazır.");
   } catch (err) {
     setStatus(err.message || "Özetleme hatası.", { error: true });
@@ -194,6 +196,7 @@ polishBtn.addEventListener("click", async () => {
     polishContent.innerHTML = renderMarkdown(polished || "");
     renderExportRow(exportPolishEl, () => ({ text: polished || "", segments: [] }));
     polishBlock.classList.remove("is-hidden");
+    resultsSection.classList.add("has-ai");
     setStatus("İyileştirilmiş içerik hazır.");
   } catch (err) {
     setStatus(err.message || "İyileştirme hatası.", { error: true });
@@ -302,6 +305,10 @@ function startWaveform(stream) {
     const barW = (cssW - (bars - 1) * gap) / bars;
     const mid = cssH / 2;
 
+    // İlk karelerde canvas genişliği ~0 olabilir (max-width geçişi); barW negatif
+    // olduğunda Safari roundRect içinde IndexSizeError fırlatır — bu kareyi atla.
+    if (barW <= 0 || cssW <= 0) return;
+
     for (let i = 0; i < bars; i++) {
       const v = data[i * step] / 255;
       const h = Math.max(3, v * cssH * 0.92);
@@ -316,6 +323,8 @@ function startWaveform(stream) {
 }
 
 function roundRect(ctx, x, y, w, h, r) {
+  if (w <= 0 || h <= 0) return;
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
