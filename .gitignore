@@ -1,0 +1,8 @@
+venv/
+.env
+__pycache__/
+*.pyc
+debug_last_recording.*
+.DS_Store
+.claude/settings.local.json
+*.log

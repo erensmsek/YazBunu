@@ -1,0 +1,9 @@
+mlx-whisper
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+transformers
+sentencepiece
+torch
+pyannote.audio

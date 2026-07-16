@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "stt-server",
+      "runtimeExecutable": "venv/bin/uvicorn",
+      "runtimeArgs": ["server:app", "--host", "127.0.0.1", "--port", "7860"],
+      "port": 7860
+    }
+  ]
+}
