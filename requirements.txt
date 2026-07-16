@@ -1,8 +1,18 @@
-mlx-whisper
+# --- Çekirdek (her platform, API modu dahil) ---
 fastapi
 uvicorn[standard]
 python-multipart
 python-dotenv
+requests
+
+# --- Lokal mod: transkript (yalnızca Apple Silicon) ---
+# Platform marker'ı, mlx-whisper'ın Apple Silicon dışı kurulumlarda pip'i
+# çökertmesini önler (diğer platformlar yalnızca API modunda çalışır).
+mlx-whisper; platform_system == "Darwin" and platform_machine == "arm64"
+
+# --- Lokal mod: çeviri (NLLB) ve diyarizasyon ---
+# Cross-platform ama büyük; yalnızca Lokal mod için gerekli. Saf API-modu
+# kullanıcısı bunları çalıştırmaz (server.py tembel import eder).
 transformers
 sentencepiece
 torch

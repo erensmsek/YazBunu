@@ -6,3 +6,6 @@ debug_last_recording.*
 .DS_Store
 .claude/settings.local.json
 *.log
+# Diyarizasyon ağırlıkları (yerelde tutulur; pyannote 4.x uyumu çözülene dek
+# commit'lenmez — bkz. CLAUDE.md New Features #4).
+models/

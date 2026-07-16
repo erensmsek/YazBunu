@@ -12,6 +12,98 @@ themeToggle.addEventListener("click", () => {
   localStorage.setItem("theme", next);
 });
 
+// --- Ayarlar: çalışma modu (Lokal/API) + Groq API anahtarı ---
+const Settings = {
+  appleSilicon: false,
+  get mode() {
+    // Apple Silicon değilse her zaman API; aksi halde kullanıcı seçimi (varsayılan API).
+    if (!this.appleSilicon) return "api";
+    return localStorage.getItem("appMode") || "api";
+  },
+  set mode(v) { localStorage.setItem("appMode", v); },
+  get apiKey() { return localStorage.getItem("groqApiKey") || ""; },
+  set apiKey(v) {
+    if (v) localStorage.setItem("groqApiKey", v);
+    else localStorage.removeItem("groqApiKey");
+  },
+};
+
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsOverlay = document.getElementById("settingsOverlay");
+const settingsClose = document.getElementById("settingsClose");
+const settingsSave = document.getElementById("settingsSave");
+const modeSetting = document.getElementById("modeSetting");
+const modeSegmented = document.getElementById("modeSegmented");
+const apiKeyInput = document.getElementById("apiKeyInput");
+const apiKeyToggle = document.getElementById("apiKeyToggle");
+const keyStatus = document.getElementById("keyStatus");
+const setupBanner = document.getElementById("setupBanner");
+const setupBannerBtn = document.getElementById("setupBannerBtn");
+
+let pendingMode = Settings.mode;
+
+function refreshModeSegmented() {
+  modeSegmented.querySelectorAll(".segmented__opt").forEach((opt) => {
+    opt.classList.toggle("is-active", opt.dataset.mode === pendingMode);
+  });
+}
+
+function refreshBanner() {
+  // Groq anahtarı yoksa ilk-kurulum banner'ını göster (anahtar her modda gerekli olabilir).
+  setupBanner.classList.toggle("is-hidden", Boolean(Settings.apiKey));
+}
+
+function openSettings() {
+  pendingMode = Settings.mode;
+  apiKeyInput.value = Settings.apiKey;
+  apiKeyInput.type = "password";
+  apiKeyToggle.textContent = "Göster";
+  modeSetting.classList.toggle("is-hidden", !Settings.appleSilicon);
+  refreshModeSegmented();
+  keyStatus.textContent = "";
+  settingsOverlay.classList.remove("is-hidden");
+}
+
+function closeSettings() { settingsOverlay.classList.add("is-hidden"); }
+
+settingsBtn.addEventListener("click", openSettings);
+settingsClose.addEventListener("click", closeSettings);
+settingsOverlay.addEventListener("click", (e) => {
+  if (e.target === settingsOverlay) closeSettings();
+});
+setupBannerBtn.addEventListener("click", openSettings);
+
+modeSegmented.addEventListener("click", (e) => {
+  const opt = e.target.closest(".segmented__opt");
+  if (!opt) return;
+  pendingMode = opt.dataset.mode;
+  refreshModeSegmented();
+});
+
+apiKeyToggle.addEventListener("click", () => {
+  const show = apiKeyInput.type === "password";
+  apiKeyInput.type = show ? "text" : "password";
+  apiKeyToggle.textContent = show ? "Gizle" : "Göster";
+});
+
+settingsSave.addEventListener("click", () => {
+  Settings.mode = pendingMode;
+  Settings.apiKey = apiKeyInput.value.trim();
+  refreshBanner();
+  keyStatus.textContent = "Kaydedildi ✓";
+  setTimeout(closeSettings, 500);
+});
+
+// Sunucudan platform bilgisini al -> mod seçicisini gösterip gösterme kararı.
+(async function initConfig() {
+  try {
+    const res = await fetch("/config");
+    const cfg = await res.json();
+    Settings.appleSilicon = Boolean(cfg.apple_silicon);
+  } catch { /* varsayılan: API modu */ }
+  refreshBanner();
+})();
+
 const tabs = document.querySelectorAll(".tab");
 const panels = document.querySelectorAll(".panel");
 const statusLine = document.getElementById("statusLine");
@@ -66,6 +158,8 @@ async function sendForTranscription(blob, filename) {
   formData.append("file", blob, filename);
   if (targetLangSelect.value) formData.append("target_lang", targetLangSelect.value);
   formData.append("diarize", diarizeToggle.checked ? "true" : "false");
+  formData.append("mode", Settings.mode);
+  if (Settings.apiKey) formData.append("api_key", Settings.apiKey);
 
   try {
     const res = await fetch("/transcribe", { method: "POST", body: formData });
@@ -162,7 +256,7 @@ async function callLLM(endpoint, key) {
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, api_key: Settings.apiKey || null }),
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
