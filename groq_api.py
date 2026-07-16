@@ -185,25 +185,39 @@ def translate_texts(
     return [str(parsed.get(str(i), texts[i])) for i in range(len(texts))]
 
 
-def summarize(text: str, api_key: Optional[str]) -> str:
-    """Transkripti birkaç cümlede Türkçe özetler (llm.py ile aynı sözleşme)."""
+def _lang_name(lang: Optional[str]) -> str:
+    """ISO 639-1 -> insan-okur dil adı; seçim yoksa Türkçe varsayılan (geriye dönük uyum)."""
+    if not lang:
+        return "Turkish"
+    return LANG_NAMES.get(lang, "Turkish")
+
+
+def summarize(text: str, api_key: Optional[str], lang: Optional[str] = None) -> str:
+    """Transkripti birkaç cümlede özetler (llm.py ile aynı sözleşme). `lang` verilmezse Türkçe."""
+    lang_name = _lang_name(lang)
     system_prompt = (
-        "Sen bir özetleme asistanısın. Verilen metni Türkçe olarak 3-4 cümlede özetle. "
-        "KESİNLİKLE sadece Türkçe yaz; başka hiçbir dile çevirme veya başka dilde metin ekleme. "
+        f"Sen bir özetleme asistanısın. Verilen konuşma metnini {lang_name} olarak 3-4 cümlede özetle. "
+        "Konuşmacının anlattıklarını doğal ve akıcı bir dille aktar; resmi bir haber spikeri ya da "
+        "rapor diliyle değil, konuşmanın tonunu koruyarak yaz. Kalıplaşmış, mesafeli ifadelerden "
+        "kaçın — sanki birine az önce anlatılanı doğal bir şekilde aktarıyormuş gibi yaz. "
+        f"KESİNLİKLE sadece {lang_name} yaz; başka hiçbir dile çevirme veya başka dilde metin ekleme. "
         "Sadece özeti ver, giriş cümlesi veya açıklama ekleme."
     )
     user_prompt = f"Aşağıdaki metni özetle:\n\n{text}"
     return _chat(system_prompt, user_prompt, api_key, max_tokens=350)
 
 
-def polish(text: str, api_key: Optional[str]) -> str:
-    """Transkripte başlık ekler ve içeriği Markdown formatında düzenler."""
+def polish(text: str, api_key: Optional[str], lang: Optional[str] = None) -> str:
+    """Transkripte başlık ekler ve içeriği Markdown formatında düzenler. `lang` verilmezse Türkçe."""
+    lang_name = _lang_name(lang)
     system_prompt = (
-        "Sen bir metin editörüsün. Sana verilen konuşma transkriptini Markdown formatında, düzgün "
-        "dilbilgisiyle yeniden yaz. Anlamı ve içeriği değiştirme, hiçbir bilgiyi çıkarma veya ekleme, "
-        "sadece başlık, noktalama ve akıcılığı düzelt. KESİNLİKLE sadece Türkçe yaz.\n\n"
+        f"Sen bir metin editörüsün. Sana verilen konuşma transkriptini Markdown formatında, düzgün "
+        f"dilbilgisiyle yeniden yaz. Anlamı ve içeriği değiştirme, hiçbir bilgiyi çıkarma veya ekleme, "
+        f"sadece başlık, noktalama ve akıcılığı düzelt. KESİNLİKLE sadece {lang_name} yaz.\n\n"
         "Markdown kuralları:\n"
-        "- Başlığı '# ' ile bir H1 başlığı yap.\n"
+        "- Başlığı '# ' ile bir H1 başlığı yap; başlık metnin konusunu somut ve bilgilendirici "
+        "şekilde yansıtsın (yalnızca bir isim veya genel bir etiket değil, ne anlatıldığını "
+        "belirten açıklayıcı bir başlık olsun).\n"
         "- Metin birden fazla konuya değiniyorsa, uygun yerlerde '## ' ile alt başlıklar ekle.\n"
         "- Vurgulanması gereken önemli kavramları *italik* yap.\n"
         "- Model adları, dosya adları, kütüphane adları, teknoloji isimleri gibi teknik terimleri "

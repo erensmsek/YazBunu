@@ -53,9 +53,11 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  /* Yumuşak, yuvarlak sistem fontu: macOS'ta SF Pro Rounded, sonra yuvarlak alternatifler */
-  font-family: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", "Nunito",
-    "Quicksand", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  /* Not: "ui-rounded"/"SF Pro Rounded" Türkçe karakterleri (İ, y, ç) yanlış glyph'lerle
+     render ediyordu (harflerin üzerinde olmaması gereken noktalar çıkıyordu) — standart
+     sistem fontuna geçirildi, Türkçe içerik bu fontlarla güvenilir render ediliyor. */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial,
+    system-ui, sans-serif;
   letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

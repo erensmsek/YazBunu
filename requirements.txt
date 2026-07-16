@@ -10,10 +10,15 @@ requests
 # çökertmesini önler (diğer platformlar yalnızca API modunda çalışır).
 mlx-whisper; platform_system == "Darwin" and platform_machine == "arm64"
 
-# --- Lokal mod: çeviri (NLLB) ve diyarizasyon ---
-# Cross-platform ama büyük; yalnızca Lokal mod için gerekli. Saf API-modu
-# kullanıcısı bunları çalıştırmaz (server.py tembel import eder).
+# --- Çeviri (NLLB, yalnızca Lokal mod) ---
+# Cross-platform ama büyük; server.py tembel import eder, API-modu kullanıcısı
+# hiç yüklemez (mode=api iken translate.py import edilmez).
 transformers
 sentencepiece
 torch
+
+# --- Konuşmacı ayrımı (her zaman lokal, mod fark etmez) ---
+# "Konuşmacı ayrımı" işaretlenirse API modunda bile çalışır (bkz. diarize.py) —
+# bu yüzden torch'a ek olarak her platformda gerekli, yalnızca Apple Silicon'a
+# özel değil.
 pyannote.audio

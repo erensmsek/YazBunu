@@ -86,7 +86,6 @@ def _transcribe_local(audio_path: str) -> dict:
 @app.post("/transcribe")
 async def transcribe(
     file: UploadFile = File(...),
-    target_lang: Optional[str] = Form(None),
     diarize: bool = Form(False),
     mode: Optional[str] = Form(None),
     api_key: Optional[str] = Form(None),
@@ -118,33 +117,59 @@ async def transcribe(
             except Exception as exc:
                 return Response(content=f"Diyarizasyon hatası: {exc}", status_code=502)
 
-    response = {"language": language, "text": base["text"], "segments": segments}
+    return {"language": language, "text": base["text"], "segments": segments}
 
-    if target_lang and target_lang != language:
-        try:
-            if use_local:
-                import translate as translate_module
 
-                translated_texts = translate_module.translate_texts(
-                    [seg["text"] for seg in segments], language, target_lang
-                )
-            else:
-                translated_texts = groq_api.translate_texts(
-                    [seg["text"] for seg in segments], language, target_lang, api_key
-                )
-        except groq_api.GroqError as exc:
-            return Response(content=str(exc), status_code=502)
+class TranslateSegment(BaseModel):
+    start: float
+    end: float
+    text: str
+    speaker: Optional[str] = None
 
-        translated_segments = [
-            {**seg, "text": t} for seg, t in zip(segments, translated_texts)
-        ]
-        response["translation"] = {
-            "target_lang": target_lang,
-            "text": " ".join(translated_texts).strip(),
-            "segments": translated_segments,
-        }
 
-    return response
+class TranslateRequest(BaseModel):
+    segments: List[TranslateSegment]
+    source_lang: str
+    target_lang: str
+    mode: Optional[str] = None
+    api_key: Optional[str] = None
+
+
+@app.post("/translate")
+async def translate_endpoint(payload: TranslateRequest):
+    """Var olan bir transkripti sonradan çevirir (kullanıcı transkripti gördükten
+    sonra hedef dili seçip 'Çevir'e bastığında tetiklenir — /transcribe'a bağımlı
+    değildir, bkz. CLAUDE.md New Features #8 UX notu)."""
+    if not payload.segments:
+        return Response(content="Boş segment listesi", status_code=400)
+
+    use_local = _use_local(payload.mode)
+    texts = [seg.text for seg in payload.segments]
+    try:
+        if use_local:
+            import translate as translate_module
+
+            translated_texts = translate_module.translate_texts(
+                texts, payload.source_lang, payload.target_lang
+            )
+        else:
+            translated_texts = groq_api.translate_texts(
+                texts, payload.source_lang, payload.target_lang, payload.api_key
+            )
+    except groq_api.GroqError as exc:
+        return Response(content=str(exc), status_code=502)
+    except Exception as exc:
+        return Response(content=f"Çeviri hatası: {exc}", status_code=502)
+
+    translated_segments = [
+        {**seg.model_dump(), "text": t}
+        for seg, t in zip(payload.segments, translated_texts)
+    ]
+    return {
+        "target_lang": payload.target_lang,
+        "text": " ".join(translated_texts).strip(),
+        "segments": translated_segments,
+    }
 
 
 class ExportSegment(BaseModel):
@@ -163,21 +188,22 @@ class ExportRequest(BaseModel):
 class LLMRequest(BaseModel):
     text: str
     api_key: Optional[str] = None
+    lang: Optional[str] = None  # ISO 639-1; verilmezse Türkçe (bkz. groq_api._lang_name)
 
 
-def _run_llm(kind: str, text: str, api_key: Optional[str]) -> str:
+def _run_llm(kind: str, text: str, api_key: Optional[str], lang: Optional[str]) -> str:
     """Özet/polish'i Groq'a yönlendirir; anahtar yoksa lokal HF sarmalayıcıya (llm.py) düşer.
 
     kind: "summarize" | "polish".
     """
     if api_key and api_key.strip():
         fn = groq_api.summarize if kind == "summarize" else groq_api.polish
-        return fn(text, api_key)
+        return fn(text, api_key, lang)
     # Geriye dönük uyum / geliştirici yolu: .env'deki HF_TOKEN ile llm.py.
     import llm as llm_module
 
     fn = llm_module.summarize if kind == "summarize" else llm_module.polish
-    return fn(text)
+    return fn(text, lang)
 
 
 @app.post("/summarize")
@@ -185,7 +211,7 @@ async def summarize(payload: LLMRequest):
     if not payload.text.strip():
         return Response(content="Boş metin", status_code=400)
     try:
-        return {"summary": _run_llm("summarize", payload.text, payload.api_key)}
+        return {"summary": _run_llm("summarize", payload.text, payload.api_key, payload.lang)}
     except groq_api.GroqError as exc:
         return Response(content=str(exc), status_code=502)
     except Exception as exc:
@@ -197,7 +223,7 @@ async def polish(payload: LLMRequest):
     if not payload.text.strip():
         return Response(content="Boş metin", status_code=400)
     try:
-        return {"polished": _run_llm("polish", payload.text, payload.api_key)}
+        return {"polished": _run_llm("polish", payload.text, payload.api_key, payload.lang)}
     except groq_api.GroqError as exc:
         return Response(content=str(exc), status_code=502)
     except Exception as exc:

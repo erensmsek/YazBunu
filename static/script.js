@@ -108,10 +108,13 @@ const tabs = document.querySelectorAll(".tab");
 const panels = document.querySelectorAll(".panel");
 const statusLine = document.getElementById("statusLine");
 const resultsSection = document.getElementById("results");
+const resultsMainEl = document.getElementById("resultsMain");
+const resultsSideEl = document.getElementById("resultsSide");
 const fullText = document.getElementById("fullText");
 const segmentsEl = document.getElementById("segments");
 const detectedLangEl = document.getElementById("detectedLang");
 const targetLangSelect = document.getElementById("targetLang");
+const translateBtn = document.getElementById("translateBtn");
 const diarizeToggle = document.getElementById("diarizeToggle");
 const translationBlock = document.getElementById("translationBlock");
 const translatedText = document.getElementById("translatedText");
@@ -156,7 +159,6 @@ async function sendForTranscription(blob, filename) {
 
   const formData = new FormData();
   formData.append("file", blob, filename);
-  if (targetLangSelect.value) formData.append("target_lang", targetLangSelect.value);
   formData.append("diarize", diarizeToggle.checked ? "true" : "false");
   formData.append("mode", Settings.mode);
   if (Settings.apiKey) formData.append("api_key", Settings.apiKey);
@@ -226,28 +228,82 @@ function renderResults(data) {
   renderSegments(segmentsEl, data.segments);
   renderExportRow(exportOriginalEl, () => ({ text: data.text || "", segments: data.segments || [] }));
 
-  // Yeni transkriptte eski AI çıktılarını gizle ve tek sütuna dön.
+  // Yeni transkriptte eski AI çıktılarını ve önceki çeviriyi gizle, tek sütuna dön.
   summaryBlock.classList.add("is-hidden");
   polishBlock.classList.add("is-hidden");
+  translationBlock.classList.add("is-hidden");
+  resultsMainEl.appendChild(translationBlock); // varsayılan konum: transkriptin altında (solda)
   resultsSection.classList.remove("has-ai");
   const hasText = Boolean((data.text || "").trim());
   summarizeBtn.disabled = !hasText;
   polishBtn.disabled = !hasText;
-
-  if (data.translation) {
-    translatedText.value = data.translation.text || "";
-    renderSegments(translatedSegmentsEl, data.translation.segments);
-    renderExportRow(exportTranslationEl, () => ({
-      text: data.translation.text || "",
-      segments: data.translation.segments || [],
-    }));
-    translationBlock.classList.remove("is-hidden");
-  } else {
-    translationBlock.classList.add("is-hidden");
-  }
+  translateBtn.disabled = !hasText;
 
   resultsSection.classList.remove("is-hidden");
 }
+
+// Özet/polish henüz üretilmemişse çeviri sağ sütuna (AI kutularının yerine), üretilmişse
+// transkriptin altına (sol sütuna) yerleşir — istenen davranış: "çeviri sağa, AI üretilince
+// çeviri sola AI kutuları sağa" (bkz. CLAUDE.md gotcha #10 devamı).
+function hasAiOutput() {
+  return !summaryBlock.classList.contains("is-hidden") || !polishBlock.classList.contains("is-hidden");
+}
+
+function repositionTranslation() {
+  if (hasAiOutput()) {
+    resultsMainEl.appendChild(translationBlock);
+  } else {
+    resultsSideEl.insertBefore(translationBlock, resultsSideEl.firstChild);
+  }
+}
+
+// --- Çeviri: mevcut transkript üzerinde, seçilen dile göre sonradan tetiklenir ---
+translateBtn.addEventListener("click", async () => {
+  if (!currentData || !(currentData.segments || []).length) return;
+  const target = targetLangSelect.value;
+  if (!target) {
+    setStatus("Önce bir hedef dil seç.", { error: true });
+    return;
+  }
+  if (target === currentData.language) {
+    setStatus("Metin zaten bu dilde.", { error: true });
+    return;
+  }
+  translateBtn.disabled = true;
+  setStatus("Çeviriliyor…", { loading: true });
+  try {
+    const res = await fetch("/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        segments: currentData.segments,
+        source_lang: currentData.language,
+        target_lang: target,
+        mode: Settings.mode,
+        api_key: Settings.apiKey || null,
+      }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(detail || `Sunucu hatası (${res.status})`);
+    }
+    const data = await res.json();
+    translatedText.value = data.text || "";
+    renderSegments(translatedSegmentsEl, data.segments);
+    renderExportRow(exportTranslationEl, () => ({
+      text: data.text || "",
+      segments: data.segments || [],
+    }));
+    translationBlock.classList.remove("is-hidden");
+    repositionTranslation();
+    resultsSection.classList.add("has-ai");
+    setStatus("Çeviri hazır.");
+  } catch (err) {
+    setStatus(err.message || "Çeviri hatası.", { error: true });
+  } finally {
+    translateBtn.disabled = false;
+  }
+});
 
 // --- AI tools: summarize & polish ---
 async function callLLM(endpoint, key) {
@@ -256,7 +312,7 @@ async function callLLM(endpoint, key) {
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, api_key: Settings.apiKey || null }),
+    body: JSON.stringify({ text, api_key: Settings.apiKey || null, lang: targetLangSelect.value || null }),
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -274,6 +330,7 @@ summarizeBtn.addEventListener("click", async () => {
     summaryContent.innerHTML = renderMarkdown(summary || "");
     summaryBlock.classList.remove("is-hidden");
     resultsSection.classList.add("has-ai");
+    repositionTranslation();
     setStatus("Özet hazır.");
   } catch (err) {
     setStatus(err.message || "Özetleme hatası.", { error: true });
@@ -291,6 +348,7 @@ polishBtn.addEventListener("click", async () => {
     renderExportRow(exportPolishEl, () => ({ text: polished || "", segments: [] }));
     polishBlock.classList.remove("is-hidden");
     resultsSection.classList.add("has-ai");
+    repositionTranslation();
     setStatus("İyileştirilmiş içerik hazır.");
   } catch (err) {
     setStatus(err.message || "İyileştirme hatası.", { error: true });

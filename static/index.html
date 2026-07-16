@@ -21,25 +21,6 @@
     </a>
 
     <div class="topbar__actions">
-      <label class="pill pill--select">
-        <span class="pill__label">Çeviri</span>
-        <select id="targetLang">
-          <option value="">Yok</option>
-          <option value="tr">Türkçe</option>
-          <option value="en">İngilizce</option>
-          <option value="de">Almanca</option>
-          <option value="fr">Fransızca</option>
-          <option value="es">İspanyolca</option>
-          <option value="it">İtalyanca</option>
-          <option value="pt">Portekizce</option>
-          <option value="ru">Rusça</option>
-          <option value="ar">Arapça</option>
-          <option value="zh">Çince</option>
-          <option value="ja">Japonca</option>
-          <option value="ko">Korece</option>
-        </select>
-      </label>
-
       <label class="pill pill--switch">
         <input type="checkbox" id="diarizeToggle" />
         <span class="switch" aria-hidden="true"></span>
@@ -166,11 +147,32 @@
     <div id="statusLine" class="status-line"></div>
 
     <section id="results" class="results is-hidden">
-      <div class="results-main">
+      <div class="results-main" id="resultsMain">
         <div class="result-block">
           <div class="result-block__head">
             <h2>Transkript <span id="detectedLang" class="lang-tag"></span></h2>
             <div class="ai-tools">
+              <label class="pill pill--select">
+                <span class="pill__label">Dil</span>
+                <select id="targetLang">
+                  <option value="">Seç…</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="en">İngilizce</option>
+                  <option value="de">Almanca</option>
+                  <option value="fr">Fransızca</option>
+                  <option value="es">İspanyolca</option>
+                  <option value="it">İtalyanca</option>
+                  <option value="pt">Portekizce</option>
+                  <option value="ru">Rusça</option>
+                  <option value="ar">Arapça</option>
+                  <option value="zh">Çince</option>
+                  <option value="ja">Japonca</option>
+                  <option value="ko">Korece</option>
+                </select>
+              </label>
+              <button id="translateBtn" class="ai-btn" type="button" disabled>
+                <span class="ai-btn__icon" aria-hidden="true">⇄</span> Çevir
+              </button>
               <button id="summarizeBtn" class="ai-btn" type="button">
                 <span class="ai-btn__icon" aria-hidden="true">✦</span> Özetle
               </button>
@@ -194,7 +196,7 @@
         </div>
       </div>
 
-      <div class="results-side">
+      <div class="results-side" id="resultsSide">
         <div class="result-block ai-card is-hidden" id="summaryBlock">
           <div class="result-block__head">
             <h2><span class="ai-badge">✦ Özet</span></h2>

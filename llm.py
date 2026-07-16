@@ -10,6 +10,8 @@ Diğer modüllerle aynı desen: modül seviyesinde lazy-initialize edilen single
 """
 
 import os
+from typing import Optional
+
 from huggingface_hub import InferenceClient
 
 MODEL = "Qwen/Qwen2.5-7B-Instruct"
@@ -43,11 +45,31 @@ def _chat(system_prompt: str, user_prompt: str, max_tokens: int) -> str:
     return resp.choices[0].message.content.strip()
 
 
-def summarize(text: str) -> str:
-    """Transkripti birkaç cümlede Türkçe özetler."""
+# groq_api.py ile aynı ISO 639-1 -> insan-okur dil adı eşlemesi (Groq'a bağımlı olmadan).
+_LANG_NAMES = {
+    "tr": "Turkish", "en": "English", "de": "German", "fr": "French",
+    "es": "Spanish", "it": "Italian", "pt": "Portuguese", "nl": "Dutch",
+    "ru": "Russian", "ar": "Arabic", "zh": "Chinese", "ja": "Japanese",
+    "ko": "Korean", "pl": "Polish", "sv": "Swedish", "uk": "Ukrainian",
+    "el": "Greek", "hi": "Hindi", "fa": "Persian", "ro": "Romanian",
+}
+
+
+def _lang_name(lang: Optional[str]) -> str:
+    if not lang:
+        return "Turkish"
+    return _LANG_NAMES.get(lang, "Turkish")
+
+
+def summarize(text: str, lang: Optional[str] = None) -> str:
+    """Transkripti birkaç cümlede özetler. `lang` verilmezse Türkçe."""
+    lang_name = _lang_name(lang)
     system_prompt = (
-        "Sen bir özetleme asistanısın. Verilen metni Türkçe olarak 3-4 cümlede özetle. "
-        "KESİNLİKLE sadece Türkçe yaz; başka hiçbir dile çevirme veya başka dilde metin ekleme. "
+        f"Sen bir özetleme asistanısın. Verilen konuşma metnini {lang_name} olarak 3-4 cümlede özetle. "
+        "Konuşmacının anlattıklarını doğal ve akıcı bir dille aktar; resmi bir haber spikeri ya da "
+        "rapor diliyle değil, konuşmanın tonunu koruyarak yaz. Kalıplaşmış, mesafeli ifadelerden "
+        "kaçın — sanki birine az önce anlatılanı doğal bir şekilde aktarıyormuş gibi yaz. "
+        f"KESİNLİKLE sadece {lang_name} yaz; başka hiçbir dile çevirme veya başka dilde metin ekleme. "
         "Sadece özeti ver, giriş cümlesi veya açıklama ekleme."
     )
     user_prompt = f"Aşağıdaki metni özetle:\n\n{text}"
@@ -55,14 +77,17 @@ def summarize(text: str) -> str:
     return _chat(system_prompt, user_prompt, max_tokens=220)
 
 
-def polish(text: str) -> str:
-    """Transkripte başlık ekler ve içeriği Markdown formatında düzenler."""
+def polish(text: str, lang: Optional[str] = None) -> str:
+    """Transkripte başlık ekler ve içeriği Markdown formatında düzenler. `lang` verilmezse Türkçe."""
+    lang_name = _lang_name(lang)
     system_prompt = (
-        "Sen bir metin editörüsün. Sana verilen konuşma transkriptini Markdown formatında, düzgün "
-        "dilbilgisiyle yeniden yaz. Anlamı ve içeriği değiştirme, hiçbir bilgiyi çıkarma veya ekleme, "
-        "sadece başlık, noktalama ve akıcılığı düzelt. KESİNLİKLE sadece Türkçe yaz.\n\n"
+        f"Sen bir metin editörüsün. Sana verilen konuşma transkriptini Markdown formatında, düzgün "
+        f"dilbilgisiyle yeniden yaz. Anlamı ve içeriği değiştirme, hiçbir bilgiyi çıkarma veya ekleme, "
+        f"sadece başlık, noktalama ve akıcılığı düzelt. KESİNLİKLE sadece {lang_name} yaz.\n\n"
         "Markdown kuralları:\n"
-        "- Başlığı '# ' ile bir H1 başlığı yap.\n"
+        "- Başlığı '# ' ile bir H1 başlığı yap; başlık metnin konusunu somut ve bilgilendirici "
+        "şekilde yansıtsın (yalnızca bir isim veya genel bir etiket değil, ne anlatıldığını "
+        "belirten açıklayıcı bir başlık olsun).\n"
         "- Metin birden fazla konuya değiniyorsa, uygun yerlerde '## ' ile alt başlıklar ekle.\n"
         "- Vurgulanması gereken önemli kavramları *italik* yap.\n"
         "- Model adları, dosya adları, kütüphane adları, teknoloji isimleri gibi teknik terimleri "
