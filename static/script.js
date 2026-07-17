@@ -92,7 +92,79 @@ settingsSave.addEventListener("click", () => {
   refreshBanner();
   keyStatus.textContent = "Kaydedildi ✓";
   setTimeout(closeSettings, 500);
+  if (pendingMode === "local") ensureLocalModelReady();
 });
+
+// --- Lokal model indirme popup'ı: Lokal mod seçiliyken ağırlıklar hazır değilse
+// /prepare-local'i tetikler ve /download-status'u polling ederek ilerlemeyi gösterir ---
+const downloadOverlay = document.getElementById("downloadOverlay");
+const downloadProgressFill = document.getElementById("downloadProgressFill");
+const downloadPercent = document.getElementById("downloadPercent");
+const downloadBytes = document.getElementById("downloadBytes");
+const downloadHint = document.getElementById("downloadHint");
+const downloadNormalFoot = document.getElementById("downloadNormalFoot");
+const downloadErrorFoot = document.getElementById("downloadErrorFoot");
+const downloadDismiss = document.getElementById("downloadDismiss");
+const downloadRetry = document.getElementById("downloadRetry");
+
+let downloadPollTimer = null;
+
+function stopDownloadPolling() {
+  if (downloadPollTimer) {
+    clearInterval(downloadPollTimer);
+    downloadPollTimer = null;
+  }
+}
+
+function formatMB(bytes) { return (bytes / (1024 * 1024)).toFixed(0); }
+
+function renderDownloadState(state) {
+  if (state.status === "error") {
+    downloadHint.textContent = `İndirme hatası: ${state.error || "bilinmeyen hata"}`;
+    downloadNormalFoot.style.display = "none";
+    downloadErrorFoot.style.display = "";
+    stopDownloadPolling();
+    return;
+  }
+  downloadHint.textContent = "Whisper modeli (~824 MB) cihazına indiriliyor. Bu işlem yalnızca ilk kullanımda yapılır.";
+  downloadNormalFoot.style.display = "";
+  downloadErrorFoot.style.display = "none";
+  const pct = state.progress || 0;
+  downloadProgressFill.style.width = `${pct}%`;
+  downloadPercent.textContent = `${pct}%`;
+  downloadBytes.textContent = state.total_bytes
+    ? `${formatMB(state.downloaded_bytes)} / ${formatMB(state.total_bytes)} MB`
+    : "";
+  if (state.status === "ready") {
+    stopDownloadPolling();
+    setTimeout(() => downloadOverlay.classList.add("is-hidden"), 400);
+  }
+}
+
+async function pollDownloadStatus() {
+  try {
+    const res = await fetch("/download-status");
+    renderDownloadState(await res.json());
+  } catch { /* ağ hatası: sıradaki pollde tekrar dene */ }
+}
+
+async function ensureLocalModelReady() {
+  try {
+    const res = await fetch("/prepare-local", { method: "POST" });
+    const state = await res.json();
+    if (state.status === "ready") return; // zaten hazır, popup'a gerek yok
+    downloadOverlay.classList.remove("is-hidden");
+    renderDownloadState(state);
+    stopDownloadPolling();
+    downloadPollTimer = setInterval(pollDownloadStatus, 800);
+  } catch { /* prepare-local başarısız: /transcribe zaten güvenlik ağı olarak senkron indirir */ }
+}
+
+downloadDismiss.addEventListener("click", () => {
+  // İndirme sunucuda arka planda devam eder; popup'ı kapatmak onu iptal etmez.
+  downloadOverlay.classList.add("is-hidden");
+});
+downloadRetry.addEventListener("click", ensureLocalModelReady);
 
 // Sunucudan platform bilgisini al -> mod seçicisini gösterip gösterme kararı.
 (async function initConfig() {
@@ -102,6 +174,9 @@ settingsSave.addEventListener("click", () => {
     Settings.appleSilicon = Boolean(cfg.apple_silicon);
   } catch { /* varsayılan: API modu */ }
   refreshBanner();
+  // Önceki oturumdan Lokal mod kalıcıysa (localStorage), sayfa yüklenir yüklenmez
+  // ağırlıkların hazır olup olmadığını kontrol et — hazır değilse popup göster.
+  if (Settings.mode === "local") ensureLocalModelReady();
 })();
 
 const tabs = document.querySelectorAll(".tab");

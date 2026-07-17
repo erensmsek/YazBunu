@@ -657,6 +657,28 @@ body {
 }
 .segmented__opt.is-active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
 
+/* ===== Lokal model indirme popup'ı ===== */
+.modal--download { max-width: 420px; }
+.progress-bar {
+  height: 8px;
+  border-radius: var(--pill);
+  background: var(--surface-2);
+  overflow: hidden;
+  margin: 14px 0 8px;
+}
+.progress-bar__fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: var(--pill);
+  transition: width 0.25s ease;
+}
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* ===== History (geçmiş) modal ===== */
 .modal--history { max-width: 560px; }
 .history-list {

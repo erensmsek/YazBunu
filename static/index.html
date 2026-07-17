@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>YazBunu — Yerel Konuşma-Metin Stüdyosu</title>
-  <link rel="stylesheet" href="/assets/style.css?v=10" />
+  <link rel="stylesheet" href="/assets/style.css?v=11" />
 </head>
 <body>
   <nav class="topbar">
@@ -108,6 +108,32 @@
 
       <div class="modal__foot">
         <button id="settingsSave" class="btn btn--primary" type="button">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lokal model indirme popup'ı: Ayarlar'da Lokal mod seçilip henüz ağırlıklar
+       inmemişse gösterilir, /download-status polling ile ilerlemeyi günceller -->
+  <div id="downloadOverlay" class="modal-overlay is-hidden">
+    <div class="modal modal--download" role="dialog" aria-modal="true" aria-labelledby="downloadTitle">
+      <div class="modal__head">
+        <h2 id="downloadTitle">Lokal model hazırlanıyor</h2>
+      </div>
+      <p class="setting__hint" id="downloadHint">
+        Whisper modeli (~824 MB) cihazına indiriliyor. Bu işlem yalnızca ilk kullanımda yapılır.
+      </p>
+      <div class="progress-bar">
+        <div id="downloadProgressFill" class="progress-bar__fill" style="width: 0%"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="downloadPercent">0%</span>
+        <span id="downloadBytes"></span>
+      </div>
+      <div class="modal__foot" id="downloadNormalFoot">
+        <button id="downloadDismiss" class="btn btn--ghost" type="button">Arka planda devam etsin</button>
+      </div>
+      <div class="modal__foot" id="downloadErrorFoot" style="display: none;">
+        <button id="downloadRetry" class="btn btn--primary" type="button">Tekrar dene</button>
       </div>
     </div>
   </div>
@@ -269,6 +295,6 @@
     </section>
   </main>
 
-  <script src="/assets/script.js?v=10"></script>
+  <script src="/assets/script.js?v=11"></script>
 </body>
 </html>
