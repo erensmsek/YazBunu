@@ -177,6 +177,41 @@ body {
 :root[data-theme="dark"] .icon-btn__sun { display: none; }
 :root[data-theme="dark"] .icon-btn__moon { display: inline; }
 
+/* ===== Dil değiştirici (uygulama arayüz dili) ===== */
+.lang-switcher { position: relative; }
+.icon-btn--lang { width: auto; padding: 0 11px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.02em; }
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 90;
+  min-width: 180px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  animation: modal-in 0.14s ease;
+}
+.lang-menu.is-hidden { display: none; }
+.lang-menu__opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 11px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+}
+.lang-menu__opt:hover { background: var(--surface-2); }
+.lang-menu__opt.is-active { background: var(--blue-soft); color: var(--blue); font-weight: 600; }
+
 /* ===== Shell / hero ===== */
 .shell {
   width: 100%;

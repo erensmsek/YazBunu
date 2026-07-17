@@ -4,7 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>YazBunu — Yerel Konuşma-Metin Stüdyosu</title>
-  <link rel="stylesheet" href="/assets/style.css?v=11" />
+  <!-- Sekme ikonu: topbar'daki marka SVG'siyle aynı (4 çubuklu dalga formu, aynı mavi renk) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234460d4' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='5' y1='10' x2='5' y2='14'/%3E%3Cline x1='9.5' y1='6' x2='9.5' y2='18'/%3E%3Cline x1='14' y1='3' x2='14' y2='21'/%3E%3Cline x1='18.5' y1='8' x2='18.5' y2='16'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/assets/style.css?v=12" />
 </head>
 <body>
   <nav class="topbar">
@@ -24,17 +26,24 @@
       <label class="pill pill--switch">
         <input type="checkbox" id="diarizeToggle" />
         <span class="switch" aria-hidden="true"></span>
-        <span class="pill__label">Konuşmacı ayrımı</span>
+        <span class="pill__label" data-i18n="diarizeLabel">Konuşmacı ayrımı</span>
       </label>
 
-      <button id="historyBtn" class="icon-btn" type="button" aria-label="Geçmiş">
+      <div class="lang-switcher">
+        <button id="langBtn" class="icon-btn icon-btn--lang" type="button" aria-haspopup="true" aria-expanded="false" data-i18n-aria="langSwitcherAria" aria-label="Uygulama dilini değiştir">
+          <span id="langBtnCode">TR</span>
+        </button>
+        <div id="langMenu" class="lang-menu is-hidden" role="menu"></div>
+      </div>
+
+      <button id="historyBtn" class="icon-btn" type="button" aria-label="Geçmiş" data-i18n-aria="historyAria">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="9"/>
           <polyline points="12 7 12 12 15 15"/>
         </svg>
       </button>
 
-      <button id="themeToggle" class="icon-btn" type="button" aria-label="Temayı değiştir">
+      <button id="themeToggle" class="icon-btn" type="button" aria-label="Temayı değiştir" data-i18n-aria="themeAria">
         <svg class="icon-btn__sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="4"/>
           <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
@@ -44,7 +53,7 @@
         </svg>
       </button>
 
-      <button id="settingsBtn" class="icon-btn" type="button" aria-label="Ayarlar">
+      <button id="settingsBtn" class="icon-btn" type="button" aria-label="Ayarlar" data-i18n-aria="settingsTitle">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -55,13 +64,13 @@
 
   <!-- İlk açılış: Groq anahtarı yoksa gösterilir (script.js yönetir) -->
   <div id="setupBanner" class="setup-banner is-hidden">
-    <div class="setup-banner__text">
+    <div class="setup-banner__text" data-i18n-html="setupBannerText">
       <strong>Hızlı başla:</strong> Transkript, çeviri ve özet için ücretsiz bir
       <b>Groq</b> API anahtarı gir. Kart gerekmez, 1 dakikada alınır.
     </div>
     <div class="setup-banner__actions">
-      <a class="btn btn--ghost" href="https://console.groq.com/keys" target="_blank" rel="noopener">Anahtar al</a>
-      <button class="btn btn--primary" type="button" id="setupBannerBtn">Anahtarı gir</button>
+      <a class="btn btn--ghost" href="https://console.groq.com/keys" target="_blank" rel="noopener" data-i18n="getKeyBtn">Anahtar al</a>
+      <button class="btn btn--primary" type="button" id="setupBannerBtn" data-i18n="enterKeyBtn">Anahtarı gir</button>
     </div>
   </div>
 
@@ -69,8 +78,8 @@
   <div id="settingsOverlay" class="modal-overlay is-hidden">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
       <div class="modal__head">
-        <h2 id="settingsTitle">Ayarlar</h2>
-        <button id="settingsClose" class="icon-btn" type="button" aria-label="Kapat">
+        <h2 id="settingsTitle" data-i18n="settingsTitle">Ayarlar</h2>
+        <button id="settingsClose" class="icon-btn" type="button" aria-label="Kapat" data-i18n-aria="closeAria">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
           </svg>
@@ -79,35 +88,35 @@
 
       <!-- Çalışma modu: yalnızca Apple Silicon'da gösterilir -->
       <div id="modeSetting" class="setting is-hidden">
-        <div class="setting__label">Çalışma modu</div>
-        <div class="setting__hint">
+        <div class="setting__label" data-i18n="modeLabel">Çalışma modu</div>
+        <div class="setting__hint" data-i18n="modeHint">
           Bu cihaz Apple Silicon. İstersen transkript ve çeviriyi tamamen cihazında
           (internetsiz) çalıştırabilirsin.
         </div>
         <div class="segmented" id="modeSegmented">
-          <button type="button" class="segmented__opt" data-mode="api">API (Groq)</button>
-          <button type="button" class="segmented__opt" data-mode="local">Lokal (cihazda)</button>
+          <button type="button" class="segmented__opt" data-mode="api" data-i18n="modeApi">API (Groq)</button>
+          <button type="button" class="segmented__opt" data-mode="local" data-i18n="modeLocal">Lokal (cihazda)</button>
         </div>
       </div>
 
       <div class="setting">
-        <label class="setting__label" for="apiKeyInput">Groq API anahtarı</label>
-        <div class="setting__hint">
+        <label class="setting__label" for="apiKeyInput" data-i18n="apiKeyLabel">Groq API anahtarı</label>
+        <div class="setting__hint" data-i18n="apiKeyHint">
           Özet ve başlıklandırma her modda; API modunda ise transkript ve çeviri de
           bu anahtarı kullanır. Tarayıcında saklanır, sunucuya kaydedilmez.
         </div>
         <div class="key-row">
           <input id="apiKeyInput" type="password" class="key-input" placeholder="gsk_..." autocomplete="off" spellcheck="false" />
-          <button id="apiKeyToggle" class="btn btn--ghost btn--sm" type="button" aria-label="Göster/gizle">Göster</button>
+          <button id="apiKeyToggle" class="btn btn--ghost btn--sm" type="button" data-i18n="showBtn">Göster</button>
         </div>
         <div class="setting__links">
-          <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Ücretsiz Groq anahtarı al →</a>
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener" data-i18n="freeKeyLink">Ücretsiz Groq anahtarı al →</a>
           <span id="keyStatus" class="key-status"></span>
         </div>
       </div>
 
       <div class="modal__foot">
-        <button id="settingsSave" class="btn btn--primary" type="button">Kaydet</button>
+        <button id="settingsSave" class="btn btn--primary" type="button" data-i18n="saveBtn">Kaydet</button>
       </div>
     </div>
   </div>
@@ -117,9 +126,9 @@
   <div id="downloadOverlay" class="modal-overlay is-hidden">
     <div class="modal modal--download" role="dialog" aria-modal="true" aria-labelledby="downloadTitle">
       <div class="modal__head">
-        <h2 id="downloadTitle">Lokal model hazırlanıyor</h2>
+        <h2 id="downloadTitle" data-i18n="downloadTitle">Lokal model hazırlanıyor</h2>
       </div>
-      <p class="setting__hint" id="downloadHint">
+      <p class="setting__hint" id="downloadHint" data-i18n="downloadHintDefault">
         Whisper modeli (~824 MB) cihazına indiriliyor. Bu işlem yalnızca ilk kullanımda yapılır.
       </p>
       <div class="progress-bar">
@@ -130,10 +139,10 @@
         <span id="downloadBytes"></span>
       </div>
       <div class="modal__foot" id="downloadNormalFoot">
-        <button id="downloadDismiss" class="btn btn--ghost" type="button">Arka planda devam etsin</button>
+        <button id="downloadDismiss" class="btn btn--ghost" type="button" data-i18n="dismissBtn">Arka planda devam etsin</button>
       </div>
       <div class="modal__foot" id="downloadErrorFoot" style="display: none;">
-        <button id="downloadRetry" class="btn btn--primary" type="button">Tekrar dene</button>
+        <button id="downloadRetry" class="btn btn--primary" type="button" data-i18n="retryBtn">Tekrar dene</button>
       </div>
     </div>
   </div>
@@ -142,8 +151,8 @@
   <div id="historyOverlay" class="modal-overlay is-hidden">
     <div class="modal modal--history" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
       <div class="modal__head">
-        <h2 id="historyTitle">Geçmiş</h2>
-        <button id="historyClose" class="icon-btn" type="button" aria-label="Kapat">
+        <h2 id="historyTitle" data-i18n="historyTitle">Geçmiş</h2>
+        <button id="historyClose" class="icon-btn" type="button" aria-label="Kapat" data-i18n-aria="closeAria">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
           </svg>
@@ -155,33 +164,30 @@
 
   <main class="shell">
     <section class="hero">
-      <p class="hero__tagline">Konuş, anında yazıya dönüşsün.</p>
+      <p class="hero__tagline" data-i18n="heroTagline">Konuş, anında yazıya dönüşsün.</p>
 
       <div id="appendBanner" class="notice notice--info is-hidden">
         <span class="notice__icon" aria-hidden="true">➕</span>
-        <span class="notice__text">
-          "<strong id="appendBannerTitle"></strong>" kaydına ses ekleniyor. Aşağıdan kaydı
-          yap ya da dosya yükle, otomatik olarak bu kayda eklenecek.
-        </span>
-        <button id="appendBannerCancel" class="btn btn--ghost btn--sm" type="button">İptal</button>
+        <span class="notice__text" id="appendBannerText"></span>
+        <button id="appendBannerCancel" class="btn btn--ghost btn--sm" type="button" data-i18n="cancelBtn">İptal</button>
       </div>
 
       <div class="tabs" role="tablist">
-        <button class="tab is-active" data-tab="record" role="tab">Mikrofon</button>
-        <button class="tab" data-tab="upload" role="tab">Dosya Yükle</button>
-        <button class="tab" data-tab="tabaudio" role="tab">Sekme Dinle</button>
+        <button class="tab is-active" data-tab="record" role="tab" data-i18n="tabMic">Mikrofon</button>
+        <button class="tab" data-tab="upload" role="tab" data-i18n="tabUpload">Dosya Yükle</button>
+        <button class="tab" data-tab="tabaudio" role="tab" data-i18n="tabTabAudio">Sekme Dinle</button>
       </div>
 
       <section class="panel" data-panel="record">
         <div class="recorder" id="recorder">
-          <button id="recordBtn" class="record-btn" aria-pressed="false" aria-label="Kaydı başlat/durdur">
+          <button id="recordBtn" class="record-btn" aria-pressed="false" aria-label="Kaydı başlat/durdur" data-i18n-aria="recordBtnAria">
             <span class="record-btn__dot"></span>
           </button>
           <canvas id="waveform" class="waveform" width="480" height="72" aria-hidden="true"></canvas>
         </div>
         <div class="record-status">
           <span id="recordTimer">00:00</span>
-          <span id="recordHint">Kaydı başlatmak için tıkla</span>
+          <span id="recordHint" data-i18n="recordHintIdle">Kaydı başlatmak için tıkla</span>
         </div>
       </section>
 
@@ -194,7 +200,7 @@
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
           </span>
-          <span class="dropzone__text">Ses dosyasını buraya sürükle ya da seç</span>
+          <span class="dropzone__text" data-i18n="dropzoneText">Ses dosyasını buraya sürükle ya da seç</span>
           <span class="dropzone__hint">wav, mp3, m4a, webm...</span>
           <input id="fileInput" type="file" accept="audio/*" hidden />
         </label>
@@ -204,7 +210,7 @@
       <section class="panel is-hidden" data-panel="tabaudio">
         <div class="notice notice--warning">
           <span class="notice__icon" aria-hidden="true">⚠</span>
-          <span class="notice__text">
+          <span class="notice__text" data-i18n-html="tabAudioNotice">
             Dinleme sırasında bu sekmeyi <strong>kapatma</strong> ve paylaşımı durdurma —
             aksi halde kayıt kesilir. Açılan paylaşım penceresinde
             <strong>"Chrome Sekmesi"</strong>ni seç, dinlemek istediğin sekmeyi işaretle ve
@@ -212,14 +218,14 @@
           </span>
         </div>
         <div class="recorder" id="tabRecorder">
-          <button id="tabRecordBtn" class="record-btn" aria-pressed="false" aria-label="Sekme dinlemeyi başlat/durdur">
+          <button id="tabRecordBtn" class="record-btn" aria-pressed="false" aria-label="Sekme dinlemeyi başlat/durdur" data-i18n-aria="tabRecordBtnAria">
             <span class="record-btn__dot"></span>
           </button>
           <canvas id="tabWaveform" class="waveform" width="480" height="72" aria-hidden="true"></canvas>
         </div>
         <div class="record-status">
           <span id="tabRecordTimer">00:00</span>
-          <span id="tabRecordHint">Dinlemeyi başlatmak için tıkla</span>
+          <span id="tabRecordHint" data-i18n="tabRecordHintIdle">Dinlemeyi başlatmak için tıkla</span>
         </div>
       </section>
     </section>
@@ -230,12 +236,12 @@
       <div class="results-main" id="resultsMain">
         <div class="result-block">
           <div class="result-block__head">
-            <h2>Transkript <span id="detectedLang" class="lang-tag"></span></h2>
+            <h2><span data-i18n="transcriptHeading">Transkript</span> <span id="detectedLang" class="lang-tag"></span></h2>
             <div class="ai-tools">
               <label class="pill pill--select">
-                <span class="pill__label">Dil</span>
+                <span class="pill__label" data-i18n="langPillLabel">Dil</span>
                 <select id="targetLang">
-                  <option value="">Seç…</option>
+                  <option value="" data-i18n="selectPlaceholder">Seç…</option>
                   <option value="tr">Türkçe</option>
                   <option value="en">İngilizce</option>
                   <option value="de">Almanca</option>
@@ -251,13 +257,13 @@
                 </select>
               </label>
               <button id="translateBtn" class="ai-btn" type="button" disabled>
-                <span class="ai-btn__icon" aria-hidden="true">⇄</span> Çevir
+                <span class="ai-btn__icon" aria-hidden="true">⇄</span> <span data-i18n="translateBtn">Çevir</span>
               </button>
               <button id="summarizeBtn" class="ai-btn" type="button">
-                <span class="ai-btn__icon" aria-hidden="true">✦</span> Özetle
+                <span class="ai-btn__icon" aria-hidden="true">✦</span> <span data-i18n="summarizeBtn">Özetle</span>
               </button>
               <button id="polishBtn" class="ai-btn" type="button">
-                <span class="ai-btn__icon" aria-hidden="true">✎</span> Başlıklandır &amp; İyileştir
+                <span class="ai-btn__icon" aria-hidden="true">✎</span> <span data-i18n="polishBtn">Başlıklandır &amp; İyileştir</span>
               </button>
             </div>
           </div>
@@ -268,7 +274,7 @@
 
         <div class="result-block is-hidden" id="translationBlock">
           <div class="result-block__head">
-            <h2>Çeviri</h2>
+            <h2 data-i18n="translationHeading">Çeviri</h2>
           </div>
           <textarea id="translatedText" class="full-text" readonly></textarea>
           <div class="segments" id="translatedSegments"></div>
@@ -279,14 +285,14 @@
       <div class="results-side" id="resultsSide">
         <div class="result-block ai-card is-hidden" id="summaryBlock">
           <div class="result-block__head">
-            <h2><span class="ai-badge">✦ Özet</span></h2>
+            <h2><span class="ai-badge" data-i18n="summaryBadge">✦ Özet</span></h2>
           </div>
           <div id="summaryContent" class="markdown-body"></div>
         </div>
 
         <div class="result-block ai-card is-hidden" id="polishBlock">
           <div class="result-block__head">
-            <h2><span class="ai-badge">✎ İyileştirilmiş İçerik</span></h2>
+            <h2><span class="ai-badge" data-i18n="polishBadge">✎ İyileştirilmiş İçerik</span></h2>
             <div class="export-row export-row--inline" id="exportPolish"></div>
           </div>
           <div id="polishContent" class="markdown-body"></div>
@@ -295,6 +301,6 @@
     </section>
   </main>
 
-  <script src="/assets/script.js?v=11"></script>
+  <script src="/assets/script.js?v=12"></script>
 </body>
 </html>
