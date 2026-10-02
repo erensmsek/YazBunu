@@ -48,7 +48,7 @@ await Promise.all([
   }),
   build({
     ...common,
-    entryPoints: { "renderer/app": "src/renderer/app.ts", "renderer/pcm-worklet": "src/renderer/pcm-worklet.ts" },
+    entryPoints: { "renderer/app": "src/renderer/app.ts" },
     outdir: dist,
     platform: "browser",
     format: "iife",

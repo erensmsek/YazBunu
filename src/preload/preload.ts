@@ -3,21 +3,14 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import { AUDIO_PROTOCOL, EVENT_CHANNELS, INVOKE_CHANNELS, type IpcResult, type YazbunuApi } from "../shared/ipc";
 import type { HistoryRecord } from "../shared/types";
 
-/** Main'den gelen {ok:false} yanıtını, kodu taşıyan bir Error'a çevirir. */
-class IpcError extends Error {
-  constructor(
-    readonly code: string,
-    readonly detail?: string,
-  ) {
-    super(detail ? `${code}: ${detail}` : code);
-  }
-}
-
+/**
+ * Main'den gelen {ok:false} yanıtını reddeder. contextBridge, Error nesnelerinin özel alanlarını
+ * (code/detail) siler; bu yüzden düz nesne fırlatılır ve mesaja da yedek olarak kodlanır.
+ */
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const res = (await ipcRenderer.invoke(channel, ...args)) as IpcResult<T>;
   if (res.ok) return res.data;
-  const err = new IpcError(res.error.code, res.error.detail);
-  throw Object.assign(err, { code: res.error.code, detail: res.error.detail });
+  throw { code: res.error.code, detail: res.error.detail, message: `YBERR:${JSON.stringify(res.error)}` };
 }
 
 const api: Record<string, unknown> = {};

@@ -18,6 +18,8 @@ interface WorkerMessage {
   stage?: string;
   data?: unknown;
   message?: string;
+  /** Worker kullanıcıya gösterilebilir bir i18n kodu verdiyse onu kullan. */
+  code?: string;
 }
 
 interface Pending {
@@ -54,7 +56,7 @@ export class WorkerHost {
         p.resolve(msg.data);
       } else if (msg.type === "error") {
         this.pending.delete(msg.id);
-        p.reject(new AppError(this.crashCode, msg.message));
+        p.reject(new AppError(msg.code ?? this.crashCode, msg.message));
       }
     });
     child.onExit((code) => {

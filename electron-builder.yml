@@ -1,0 +1,93 @@
+# YazBunu paketleme yapılandırması (electron-builder).
+# Native modüller ve ffmpeg kurulumda o platform için indirilir → her platform kendi işletim
+# sisteminde derlenir: npm run dist:mac | dist:win | dist:linux (bkz. docs/BUILD.md).
+appId: com.erensmsek.yazbunu
+productName: YazBunu
+copyright: Copyright © 2026 Eren Şimşek
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**
+  - package.json
+  - "!**/*.map"
+  - "!**/*.{md,markdown,d.ts,ts.map}"
+  - "!**/{test,tests,__tests__,example,examples,docs}/**"
+  # transformers.js Node sürümü web çalışma zamanını kullanmaz.
+  - "!node_modules/onnxruntime-web/**"
+  # onnxruntime-node tüm platformların ikililerini içerir: yalnızca hedefinkini al.
+  - "!node_modules/onnxruntime-node/bin/**"
+  - "node_modules/onnxruntime-node/bin/napi-v*/${platform}/${arch}/**"
+
+# Native ikililer asar arşivinden çıkarılmalı (işletim sistemi arşiv içinden yükleyemez).
+asarUnpack:
+  - "node_modules/sherpa-onnx-*/**"
+  - "node_modules/ffmpeg-static/**"
+  - "node_modules/onnxruntime-node/**"
+  - "node_modules/sharp/**"
+  - "node_modules/@img/**"
+
+extraResources:
+  - from: resources/models
+    to: models
+    filter: ["*.onnx", "ATTRIBUTION.md"]
+  - from: LICENSE
+    to: LICENSE.txt
+  - from: build/THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
+
+mac:
+  category: public.app-category.productivity
+  icon: resources/icons/icon-512.png
+  target:
+    - target: dmg
+    - target: zip
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    NSMicrophoneUsageDescription: "YazBunu, konuşmanı yazıya dökmek için mikrofonu kullanır."
+    NSAudioCaptureUsageDescription: "YazBunu, bilgisayarda çalan sesi (toplantı, video) yazıya dökmek için sistem sesini kaydeder."
+    LSApplicationCategoryType: public.app-category.productivity
+dmg:
+  title: "YazBunu ${version}"
+
+win:
+  icon: resources/icons/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: YazBunu
+  artifactName: "YazBunu-Setup-${version}.${ext}"
+
+linux:
+  icon: resources/icons/icon-512.png
+  category: AudioVideo
+  synopsis: Konuşmayı yazıya döken, çeviren ve özetleyen ses asistanı
+  maintainer: "Eren Şimşek <eren52simsek@gmail.com>"
+  target:
+    - target: AppImage
+    - target: deb
+  desktop:
+    entry:
+      StartupWMClass: YazBunu
+appImage:
+  artifactName: "YazBunu-${version}-${arch}.${ext}"
+deb:
+  # Sistem sesi kaydı için (PipeWire'da pipewire-pulse aynı komutu sağlar).
+  recommends: ["pulseaudio-utils"]
+  artifactName: "yazbunu_${version}_${arch}.${ext}"
+
+publish:
+  provider: github
+  owner: erensmsek
+  repo: YazBunu
+  releaseType: draft

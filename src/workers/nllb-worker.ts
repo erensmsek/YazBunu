@@ -30,8 +30,19 @@ const send = (msg: unknown) => port.postMessage(msg);
 type Translator = (text: string | string[], opts: Record<string, unknown>) => Promise<{ translation_text: string }[]>;
 let translator: Translator | null = null;
 
+class LoadError extends Error {}
+
 async function load(cacheDir: string, reqId: number): Promise<Translator> {
   if (translator) return translator;
+  try {
+    return await loadInner(cacheDir, reqId);
+  } catch (err) {
+    // Model indirilemedi / önbellek bozuk: kullanıcıya "model indirilemedi" olarak gösterilir.
+    throw new LoadError(err instanceof Error ? err.message : String(err));
+  }
+}
+
+async function loadInner(cacheDir: string, reqId: number): Promise<Translator> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const tf = require("@huggingface/transformers");
   tf.env.cacheDir = cacheDir;
@@ -83,6 +94,11 @@ port.on("message", async (e: { data: Req }) => {
     const data = req.type === "translate" ? await translate(req) : (await load(req.cacheDir, req.id), true);
     send({ id: req.id, type: "result", data });
   } catch (err) {
-    send({ id: req.id, type: "error", message: err instanceof Error ? err.message : String(err) });
+    send({
+      id: req.id,
+      type: "error",
+      message: err instanceof Error ? err.message : String(err),
+      ...(err instanceof LoadError ? { code: "errModelDownload" } : {}),
+    });
   }
 });

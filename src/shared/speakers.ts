@@ -10,7 +10,7 @@ export interface SpeakerTurn {
 /** Kelime/segment hiçbir dönüşle örtüşmüyorsa en yakın dönüşe bu kadar saniyeye kadar bağlanır. */
 const NEAREST_MAX_GAP = 1.5;
 /** Bundan kısa konuşmacı değişimleri (kelime düzeyinde) gürültü sayılıp komşuya katılır. */
-const MIN_RUN_SECONDS = 0.6;
+const MIN_RUN_SECONDS = 1.0;
 
 const CJK_RE = /[぀-ヿ㐀-鿿가-힯]/;
 
