@@ -1,15 +1,14 @@
-venv/
-.env
-__pycache__/
-*.pyc
-debug_last_recording.*
+node_modules/
+dist/
+release/
+resources/models/
+test-results/
+playwright-report/
 .DS_Store
-.claude/settings.local.json
 *.log
+.env
+.claude/settings.local.json
 
-# Geliştirme günlüğü ve scratch test dosyaları — repo'yu kullanıcı için sade
-# tutmak amacıyla yalnızca yerelde tutuluyor, public GitHub'a gitmiyor.
+# Geliştirme günlüğü ve scratch test dosyaları — yalnızca yerelde tutuluyor.
 CLAUDE.md
-test_llm.py
-test_llm_hf_api.py
-test_output_polish.md
+.cache/
