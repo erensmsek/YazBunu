@@ -45,6 +45,24 @@ export interface AsrFiles {
 
 type ProgressFn = (stage: "download" | "extract", fraction: number) => void;
 
+/** Ağ kesintilerine karşı kaldığı yerden devam ederek birkaç kez dener. */
+export async function downloadWithRetry(
+  fetchFn: FetchLike,
+  url: string,
+  dest: string,
+  opts: { signal?: AbortSignal; onProgress?: (fraction: number) => void; expectedBytes?: number; attempts?: number } = {},
+): Promise<void> {
+  const attempts = opts.attempts ?? 3;
+  for (let i = 1; ; i++) {
+    try {
+      return await downloadFile(fetchFn, url, dest, opts);
+    } catch (err) {
+      if (isCancelled(err) || opts.signal?.aborted || i >= attempts) throw err;
+      await new Promise((r) => setTimeout(r, 1500 * i));
+    }
+  }
+}
+
 /** HTTP indirmesi; yarım kalan .part dosyası varsa Range ile kaldığı yerden devam eder. */
 export async function downloadFile(
   fetchFn: FetchLike,
@@ -273,7 +291,7 @@ export class ModelManager extends EventEmitter {
       const tmpDir = path.join(this.userDir, "tmp");
       if (spec.member) {
         const archive = path.join(tmpDir, path.basename(spec.url));
-        await downloadFile(this.fetchFn, spec.url, archive, { signal: ctrl.signal, onProgress: (f) => progress("download", f) });
+        await downloadWithRetry(this.fetchFn, spec.url, archive, { signal: ctrl.signal, onProgress: (f) => progress("download", f) });
         const outDir = path.join(tmpDir, `x-${name}`);
         await extractArchive(archive, outDir, (n) => n === spec.member, { signal: ctrl.signal });
         await fsp.mkdir(path.dirname(target), { recursive: true });
@@ -281,7 +299,7 @@ export class ModelManager extends EventEmitter {
         await fsp.rm(outDir, { recursive: true, force: true });
         await fsp.rm(archive, { force: true });
       } else {
-        await downloadFile(this.fetchFn, spec.url, target, { signal: ctrl.signal, onProgress: (f) => progress("download", f) });
+        await downloadWithRetry(this.fetchFn, spec.url, target, { signal: ctrl.signal, onProgress: (f) => progress("download", f) });
       }
     }, signal);
     return target;
@@ -342,7 +360,7 @@ export class ModelManager extends EventEmitter {
     await this.singleFlight(`asr-${id}`, async (ctrl, progress) => {
       const tmpDir = path.join(this.userDir, "tmp");
       const archive = path.join(tmpDir, spec.archive);
-      await downloadFile(this.fetchFn, `${GH}/asr-models/${spec.archive}`, archive, {
+      await downloadWithRetry(this.fetchFn, `${GH}/asr-models/${spec.archive}`, archive, {
         signal: ctrl.signal,
         expectedBytes: spec.bytes,
         onProgress: (f) => progress("download", f),

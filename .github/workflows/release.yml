@@ -1,0 +1,66 @@
+# Üç platform için masaüstü paketlerini derler.
+# - Elle: Actions › Release › Run workflow (paketler "artifact" olarak indirilir)
+# - v* etiketi push edilince: paketler taslak (draft) GitHub Release'e yüklenir
+# Repo public olduğu için standart runner dakikaları ücretsizdir.
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            name: mac-arm64
+            dist: npx electron-builder --mac --arm64
+            verify: release/mac-arm64 darwin arm64
+          - os: macos-14
+            name: mac-x64
+            prepare: node scripts/prepare-arch.mjs x64 darwin
+            dist: npx electron-builder --mac --x64
+            verify: release/mac darwin x64
+          - os: windows-latest
+            name: win-x64
+            dist: npx electron-builder --win --x64
+            verify: release/win-unpacked win32 x64
+          - os: ubuntu-22.04
+            name: linux-x64
+            dist: npx electron-builder --linux --x64
+            verify: release/linux-unpacked linux x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - if: matrix.prepare
+        run: ${{ matrix.prepare }}
+      - run: npm run build && npm run fetch-models
+      - name: Paketle
+        run: ${{ matrix.dist }} --publish ${{ startsWith(github.ref, 'refs/tags/v') && 'always' || 'never' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Paketi doğrula
+        run: node scripts/verify-package.mjs ${{ matrix.verify }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YazBunu-${{ matrix.name }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error

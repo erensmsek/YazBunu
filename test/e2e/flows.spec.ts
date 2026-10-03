@@ -343,3 +343,12 @@ test("offline modeli arayüzden indir (GitHub, gerçek ağ) ve kullan", async ()
   await expect(page.locator("#segments")).toContainText(/heaven/i, { timeout: 120_000 });
   await l.close();
 });
+
+test("offline modda model yokken kayıt başlamaz, anlaşılır uyarı verir", async () => {
+  const l = await launch({ fakeAudio: WAV_EN, settings: { mode: "local", localModel: "small" } });
+  const { page } = l;
+  await page.click("#recordBtn");
+  await expect(page.locator("#statusLine")).toHaveText("Offline model henüz indirilmedi. Ayarlar'dan indir.");
+  await expect(page.locator("#recorder")).not.toHaveClass(/is-recording/);
+  await l.close();
+});

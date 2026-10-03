@@ -124,8 +124,18 @@ async function createServices(): Promise<Services> {
   const history = new HistoryStore(path.join(userData, "history"));
   await history.init();
 
-  // Chromium ağ yığını: sistem proxy ayarlarını kullanır (kurumsal ağlarda önemli).
-  const fetchFn: FetchLike = (input, init) => net.fetch(input, init as RequestInit);
+  // Önce Chromium ağ yığını (sistem proxy'si ve işletim sistemi sertifikaları — kurumsal ağlarda
+  // önemli); bağlantı kurulamazsa Node'un fetch'ine düş (bazı proxy/sertifika kurulumlarında
+  // yalnızca biri çalışabiliyor).
+  const fetchFn: FetchLike = async (input, init) => {
+    try {
+      return await net.fetch(input, init as RequestInit);
+    } catch (err) {
+      if ((init?.signal as AbortSignal | undefined)?.aborted) throw err;
+      log(`net.fetch failed (${String(err)}), falling back to node fetch`);
+      return fetch(input, init);
+    }
+  };
   const models = new ModelManager(path.join(resourcesDir(), "models"), path.join(userData, "models"), fetchFn);
   const groq = new GroqClient({
     getKey: () => settings.getApiKey(),

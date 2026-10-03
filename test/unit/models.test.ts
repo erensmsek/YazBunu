@@ -97,3 +97,13 @@ describe("ModelManager", () => {
     await expect(m.asrFiles("turbo")).rejects.toMatchObject({ code: "errModelMissing" });
   });
 });
+
+describe("downloadWithRetry", () => {
+  it("kesintide otomatik olarak kaldığı yerden devam eder", async () => {
+    dropFirst = true;
+    const dest = path.join(tmpDir(), "retry.bin");
+    const { downloadWithRetry } = await import("../../src/main/models");
+    await downloadWithRetry((i, init) => fetch(i, init), `${base}/m`, dest);
+    expect(readFileSync(dest).equals(payload)).toBe(true);
+  });
+});

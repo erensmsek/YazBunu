@@ -1,4 +1,4 @@
-# YazBunu — Çalıştırma Kılavuzu / Run Guide
+# YazBunu — Kullanım Kılavuzu / User Guide
 
 🇹🇷 [Türkçe](#-türkçe) &nbsp;·&nbsp; 🇬🇧 [English](#-english)
 
@@ -6,121 +6,72 @@
 
 ## 🇹🇷 Türkçe
 
-Bu kılavuz, projeyi ilk kez klonlayan/indiren biri için hazırlandı. Kod satırı
-yazmadan, çift tıklayarak başlatma seçeneği içerir.
+### 1) Kurulum
 
-### 1) Tek seferlik kurulum (her platformda gerekli)
-
-```bash
-python3 -m venv venv
-```
-- **macOS/Linux**: `source venv/bin/activate`
-- **Windows**: `venv\Scripts\activate`
-
-```bash
-pip install -r requirements.txt
-```
-
-**Sistem gereksinimleri** (Python paketleri dışında, ayrıca kurulmalı):
-- **Python 3.10+**
-- **`ffmpeg`** — konuşmacı ayrımı (diyarizasyon) özelliği için zorunlu. Kurulu değilse "Konuşmacı ayrımı" işaretliyken hata alırsın; diğer tüm özellikler `ffmpeg` olmadan da çalışır.
-  - macOS: `brew install ffmpeg`
-  - Windows: [ffmpeg.org](https://ffmpeg.org/download.html)'dan indirip PATH'e ekle, ya da `winget install ffmpeg`
-  - Linux: `sudo apt install ffmpeg` (Debian/Ubuntu) ya da dağıtımının paket yöneticisi
-
-(İsteğe bağlı) Groq API anahtarını `.env` dosyasına eklemek yerine, uygulama açıldığında sağ üstteki **Ayarlar**'dan da girebilirsin — tarayıcında saklanır.
-
-### 2) Uygulamayı başlatma — kod satırı yazmadan
-
-Kurulumdan sonra, projenin ana klasöründeki şu dosyaya **çift tıkla**:
-
-| Platform | Dosya |
+| Sistem | Adımlar |
 |---|---|
-| macOS | `YazBunu-Baslat.command` |
-| Windows | `YazBunu-Baslat.bat` |
-| Linux | `YazBunu-Baslat.sh` |
+| **macOS** | `.dmg`'yi aç, YazBunu'yu **Uygulamalar**'a sürükle. İlk açılışta "tanınmayan geliştirici" uyarısı çıkarsa uygulamaya **sağ tık → Aç**. "Hasarlı" denirse Terminal'de: `xattr -cr /Applications/YazBunu.app` |
+| **Windows** | `YazBunu-Setup-x.y.z.exe`'yi çalıştır. SmartScreen uyarısında **Ek bilgi → Yine de çalıştır**. |
+| **Linux (AppImage)** | `chmod +x YazBunu-*.AppImage && ./YazBunu-*.AppImage` |
+| **Linux (deb)** | `sudo apt install ./yazbunu_*_amd64.deb` |
 
-Açılan pencerede sunucu başlar ve birkaç saniye içinde tarayıcı otomatik açılır
-(`http://127.0.0.1:7860`). Uygulamayı kapatmak için o pencereyi kapatman ya da
-içinde `Ctrl+C`'ye basman yeterli.
+### 2) İlk ayar
 
-**Platforma özgü notlar:**
-- **macOS**: İlk çalıştırmada "bilinmeyen geliştirici" uyarısı çıkarsa, dosyaya sağ tıklayıp **Aç**'ı seç (yalnızca ilk seferde gerekir).
-- **Linux**: Dosya yöneticiler arasında çift tıklamanın davranışı değişir (bazıları "Çalıştır" seçeneği sorar, bazıları metin editöründe açar). Çalışmazsa bir terminalde `./YazBunu-Baslat.sh` komutuyla çalıştırabilirsin.
+1. Sağ üstteki ⚙️ **Ayarlar** → **Groq API anahtarı**: [console.groq.com/keys](https://console.groq.com/keys)'ten ücretsiz al (kart gerekmez), yapıştır, **Test et** → **Kaydet**.
+2. İstersen **Konuşma dili**ni sabitle (kısa kayıtlarda doğruluğu artırır) ve **Konuşmacı sayısı**nı seç.
+3. İnternetsiz çalışmak için **Çalışma modu → Offline** ve bir Whisper modeli indir (önerilen: *Turbo*).
 
-### 3) Masaüstüne/Dock'a "uygulama" olarak ekleme (opsiyonel)
+### 3) Kullanım
 
-Uygulama çalışırken tarayıcıda `http://127.0.0.1:7860` açıkken:
+| Sekme | Ne yapar |
+|---|---|
+| **Mikrofon** | Kaydı başlat; **Canlı yazı** açıksa metin konuştukça (≈15–20 sn gecikmeyle) belirir. |
+| **Sistem Sesi** | Bilgisayarda çalan sesi kaydeder (toplantı, video). |
+| **Toplantı** | Mikrofon + sistem sesi birlikte. Yankıyı azaltmak için kulaklık önerilir. |
+| **Dosya Yükle** | Bir ses ya da video dosyası seç veya pencereye sürükle-bırak. |
 
-- **Chrome / Edge**: Adres çubuğunun sağındaki yükleme ikonuna (⊕) tıkla → **Yükle**. Uygulama artık kendi penceresinde, Dock/Görev Çubuğu'ndan açılabilir bir simgeyle çalışır.
-- **macOS Safari**: Paylaş menüsü → **Dock'a Ekle**.
+- **Kısayol:** `Ctrl+Shift+Y` (macOS'ta `Cmd+Shift+Y`) uygulama arka plandayken bile kaydı başlatır/durdurur (Ayarlar › Genel'den değiştirilebilir).
+- **Sonuçlar:** Konuşmacı adına tıkla → isim ver. **Düzenle** ile metni düzelt. Zaman damgasına tıkla → ses o andan çalar.
+- **Çevir / Özetle / Başlıklandır:** "Dil" seçiliyse özet ve iyileştirme de o dilde üretilir; seçili değilse transkriptin dilinde.
+- **Geçmiş** (🕘): Kayıtlar otomatik saklanır. **Ses Ekle** ile bir kayda sonradan ses eklenir.
 
-İkon, uygulamanın kendi marka simgesiyle (mavi dalga formu, yuvarlatılmış kare) otomatik gelir — ayrıca bir ayar gerekmez.
+### 4) Sistem sesi — platform notları
 
-### 4) Sorun mu yaşıyorsun?
+| Sistem | Durum |
+|---|---|
+| **Windows** | Doğrudan çalışır. |
+| **macOS 13+** | İlk kullanımda *Ekran ve Sistem Sesi Kaydı* izni istenir: **Sistem Ayarları › Gizlilik ve Güvenlik**'ten YazBunu'ya izin ver, uygulamayı yeniden başlat. Çalışmazsa ücretsiz [BlackHole](https://existential.audio/blackhole/) sanal ses aygıtını kur, Ayarlar › Mikrofon'dan onu seç. |
+| **Linux** | PulseAudio ya da PipeWire (`pipewire-pulse`) ve `parec` komutu gerekir: `sudo apt install pulseaudio-utils` |
 
-- Sunucu açılmıyor / `venv bulunamadı` hatası → Adım 1'i atlamışsındır, kurulumu tekrar yap.
-- Diyarizasyon 502 hatası veriyor → `ffmpeg` kurulu değil, yukarıdaki adımdan kur.
-- Apple Silicon dışı bir cihazdasın ve "Lokal" mod seçeneği görünmüyor → beklenen davranış, o mod yalnızca Apple Silicon Mac'lerde sunulur; API modu (Groq anahtarıyla) her platformda tam işlevseldir.
+### 5) Sorun giderme
 
-<br>
+| Sorun | Çözüm |
+|---|---|
+| "Groq API anahtarı gerekli" | Ayarlar'dan anahtarı gir ve **Kaydet**. |
+| "Groq ücretsiz kota sınırına ulaşıldı" | Ücretsiz katmanın saatlik/günlük sınırı. Uygulama kısa beklemeleri kendisi yapar; uzun sınırda birkaç dakika sonra tekrar dene ya da Offline moda geç. |
+| "Groq modeli kullanılamıyor" | Groq modeli kaldırmış: Ayarlar › Gelişmiş'e [güncel model kimliğini](https://console.groq.com/docs/models) yaz. |
+| Mikrofon çalışmıyor (macOS) | Sistem Ayarları › Gizlilik ve Güvenlik › Mikrofon › YazBunu'yu aç. |
+| Offline model inmiyor | İnternet bağlantısını kontrol et; indirme kaldığı yerden devam eder. |
+| Verilerim nerede? | Ayarlar › Gelişmiş › **Veri klasörünü aç** (geçmiş, sesler, modeller). |
 
 ---
 
 ## 🇬🇧 English
 
-This guide is for anyone cloning/downloading the project for the first time. It includes a no-command-line, double-click startup option.
+### 1) Install
+- **macOS:** open the `.dmg`, drag YazBunu to Applications. On first launch right-click → **Open**. If macOS says the app is "damaged": `xattr -cr /Applications/YazBunu.app`.
+- **Windows:** run the installer; on SmartScreen choose **More info → Run anyway**.
+- **Linux:** `chmod +x YazBunu-*.AppImage && ./YazBunu-*.AppImage`, or `sudo apt install ./yazbunu_*_amd64.deb`.
 
-### 1) One-time setup (required on every platform)
+### 2) First run
+Open ⚙️ **Settings**, paste a free [Groq API key](https://console.groq.com/keys), **Test** → **Save**.
+For fully offline use choose **Operating mode → Offline** and download a Whisper model (*Turbo* recommended).
 
-```bash
-python3 -m venv venv
-```
-- **macOS/Linux**: `source venv/bin/activate`
-- **Windows**: `venv\Scripts\activate`
+### 3) Use
+**Microphone**, **System Audio**, **Meeting** (both) or **Upload File** (or drag & drop).
+Global shortcut `Ctrl/Cmd+Shift+Y` toggles recording. Click a speaker name to rename it, **Edit** to fix text,
+a timestamp to play from there. Recordings are saved to **History** automatically.
 
-```bash
-pip install -r requirements.txt
-```
-
-**System requirements** (in addition to the Python packages):
-- **Python 3.10+**
-- **`ffmpeg`** — required for speaker diarization. Without it, transcription/translation/summaries still work fine, but enabling "Speaker diarization" will error out.
-  - macOS: `brew install ffmpeg`
-  - Windows: download from [ffmpeg.org](https://ffmpeg.org/download.html) and add it to `PATH`, or `winget install ffmpeg`
-  - Linux: `sudo apt install ffmpeg` (Debian/Ubuntu) or your distro's package manager
-
-(Optional) Instead of putting your Groq API key in `.env`, you can enter it from the in-app **Settings** once the app is running — it's stored in your browser.
-
-### 2) Launching the app — no command line needed
-
-After setup, **double-click** the file matching your OS in the project's root folder:
-
-| Platform | File |
-|---|---|
-| macOS | `YazBunu-Baslat.command` |
-| Windows | `YazBunu-Baslat.bat` |
-| Linux | `YazBunu-Baslat.sh` |
-
-A window opens, the server starts, and your browser opens automatically to
-`http://127.0.0.1:7860` within a couple seconds. To stop the app, close that
-window or press `Ctrl+C` inside it.
-
-**Platform-specific notes:**
-- **macOS**: If you see an "unknown developer" warning on first run, right-click the file and choose **Open** instead (only needed once).
-- **Linux**: Double-click behavior varies by file manager (some prompt "Run", others open it in a text editor). If it doesn't work, run `./YazBunu-Baslat.sh` from a terminal instead.
-
-### 3) Installing as a desktop app (optional)
-
-With the app running and `http://127.0.0.1:7860` open in your browser:
-
-- **Chrome / Edge**: Click the install icon (⊕) at the right of the address bar → **Install**. The app now runs in its own window, launchable from your Dock/Taskbar.
-- **macOS Safari**: Share menu → **Add to Dock**.
-
-The icon is the app's own brand mark (blue waveform, rounded square) — no extra setup needed.
-
-### 4) Troubleshooting
-
-- Server won't start / `venv not found` error → you skipped step 1, redo the setup.
-- Diarization returns a 502 error → `ffmpeg` isn't installed, see the step above.
-- You're on a non-Apple-Silicon device and don't see a "Local" mode option → expected — that mode is only offered on Apple Silicon Macs; API mode (with a Groq key) is fully functional on every platform.
+### 4) System audio
+Windows: works out of the box. macOS 13+: grant *Screen & System Audio Recording* permission (or use BlackHole).
+Linux: requires PulseAudio/PipeWire and `parec` (`sudo apt install pulseaudio-utils`).

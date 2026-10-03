@@ -16,9 +16,10 @@ files:
   - "!**/{test,tests,__tests__,example,examples,docs}/**"
   # transformers.js Node sürümü web çalışma zamanını kullanmaz.
   - "!node_modules/onnxruntime-web/**"
-  # onnxruntime-node tüm platformların ikililerini içerir: yalnızca hedefinkini al.
-  - "!node_modules/onnxruntime-node/bin/**"
-  - "node_modules/onnxruntime-node/bin/napi-v*/${platform}/${arch}/**"
+  # onnxruntime-node tüm platformların ikililerini içerir: her platform bölümü diğerlerini hariç
+  # tutar. Not: ${platform} makrosu çapraz derlemede derleyen makineye çözüldüğü için kullanılmıyor.
+  # Platform bölümlerindeki files listesi yalnızca hariç tutma içerirse electron-builder "her şeyi"
+  # dahil eder — bu yüzden orada da dist/** ve package.json tekrar yazılı.
 
 # Native ikililer asar arşivinden çıkarılmalı (işletim sistemi arşiv içinden yükleyemez).
 asarUnpack:
@@ -38,11 +39,19 @@ extraResources:
     to: THIRD_PARTY_NOTICES.md
 
 mac:
+  files:
+    - dist/**
+    - package.json
+    - "!**/*.map"
+    - "!node_modules/onnxruntime-node/bin/napi-v*/{linux,win32}/**"
   category: public.app-category.productivity
   icon: resources/icons/icon-512.png
   target:
     - target: dmg
     - target: zip
+  # Sertifika yoksa ad-hoc imza: Apple Silicon imzasız uygulamayı hiç çalıştırmaz.
+  # Apple Developer ID alınınca burayı sertifika adıyla değiştir (ya da CSC_NAME ortam değişkeni).
+  identity: "-"
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
@@ -55,6 +64,12 @@ dmg:
   title: "YazBunu ${version}"
 
 win:
+  files:
+    - dist/**
+    - package.json
+    - "!**/*.map"
+    - "!node_modules/onnxruntime-node/bin/napi-v*/{linux,darwin}/**"
+    - "!node_modules/onnxruntime-node/bin/napi-v*/win32/arm64/**"
   icon: resources/icons/icon.ico
   target:
     - target: nsis
@@ -69,6 +84,12 @@ nsis:
   artifactName: "YazBunu-Setup-${version}.${ext}"
 
 linux:
+  files:
+    - dist/**
+    - package.json
+    - "!**/*.map"
+    - "!node_modules/onnxruntime-node/bin/napi-v*/{win32,darwin}/**"
+    - "!node_modules/onnxruntime-node/bin/napi-v*/linux/arm64/**"
   icon: resources/icons/icon-512.png
   category: AudioVideo
   synopsis: Konuşmayı yazıya döken, çeviren ve özetleyen ses asistanı

@@ -1,6 +1,6 @@
 # YazBunu 2.0 — Masaüstü Uygulaması Planı
 
-> Durum: uygulanıyor (`feature/desktop-app`). Web sürümü (FastAPI) `9e0712e` commit'inde duruyor.
+> Durum: uygulandı (`feature/desktop-app`). Web sürümü (FastAPI) `9e0712e` commit'inde duruyor.
 
 ## 1. Hedef
 

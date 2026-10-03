@@ -396,6 +396,9 @@ function renderModels(): void {
   nllb.innerHTML = "";
   const tr = modelStatuses.find((m) => m.id === "nllb");
   if (tr) nllb.appendChild(modelRow(tr, false));
+  // Intel Mac'te offline çeviri yok: başlığı da gizle.
+  nllb.classList.toggle("is-hidden", !tr);
+  nllb.previousElementSibling?.classList.toggle("is-hidden", !tr);
 }
 
 api.on("models-status", (s) => {

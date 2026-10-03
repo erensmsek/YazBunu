@@ -50,6 +50,9 @@ const EXTERNAL_ALLOW = [
   "https://github.com/ExistentialAudio/BlackHole",
 ];
 
+/** onnxruntime-node Intel Mac (darwin-x64) ikilisi yayınlamıyor: NLLB orada çalışamaz. */
+export const OFFLINE_TRANSLATE_SUPPORTED = !(process.platform === "darwin" && process.arch === "x64");
+
 const PATCHABLE = new Set(["title", "segments", "speakers", "text", "summary", "polish", "translation"]);
 
 export function engineOptions(s: Settings): Omit<EngineOptions, "signal" | "onProgress"> {
@@ -269,6 +272,10 @@ export function registerIpc(s: Services, hooks: Hooks): void {
   handle("startRecording", async ({ source, appendTo }: { source: CaptureSource; appendTo?: string | null }) => {
     if (source !== "system" && !(await hooks.askMicAccess())) throw new AppError("micAccessError", "permission denied");
     const settings = s.settings.get();
+    // Offline modda model kayıt sırasında sessizce inmesin: önce Ayarlar'dan indirilmeli.
+    if (settings.mode === "local" && !s.models.isAsrInstalled(settings.localModel)) {
+      throw new AppError("errModelMissing", settings.localModel);
+    }
     const id = `rec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const session = new RecordingSession(id, s.engine, engineOptions(settings), settings.liveTranscription);
     const entry: SessionEntry = { session, source, appendTo: appendTo ?? null };
@@ -394,6 +401,7 @@ export function registerIpc(s: Services, hooks: Hooks): void {
         const texts = segments.map((x) => x.text);
         let out: string[];
         if (s.settings.get().mode === "local") {
+          if (!OFFLINE_TRANSLATE_SUPPORTED) throw new AppError("errOfflineTranslateUnsupported");
           const src = NLLB_CODES[source];
           const tgt = NLLB_CODES[target];
           if (!src || !tgt) throw new AppError("statusTranslateError", `${source} → ${target}`);
@@ -468,11 +476,13 @@ export function registerIpc(s: Services, hooks: Hooks): void {
 
   // ---------- Modeller ----------
 
-  handle("modelStatus", () => s.models.statuses());
+  const modelStatuses = () => s.models.statuses().filter((m) => m.id !== "nllb" || OFFLINE_TRANSLATE_SUPPORTED);
+  handle("modelStatus", modelStatuses);
 
   handle("downloadModel", async (id: string) => {
     if (id.startsWith("asr-")) return s.models.downloadAsr(id.slice(4) as LocalAsrModel);
     if (id === "nllb") {
+      if (!OFFLINE_TRANSLATE_SUPPORTED) throw new AppError("errOfflineTranslateUnsupported");
       s.models.setExternalState("nllb", { downloading: true, progress: 0, error: null });
       try {
         await s.nllb.call(
@@ -504,6 +514,6 @@ export function registerIpc(s: Services, hooks: Hooks): void {
     }
   });
 
-  s.models.on("status", (st) => hooks.send("models-status", st));
+  s.models.on("status", () => hooks.send("models-status", modelStatuses()));
   s.settings.onChange(() => hooks.send("settings-changed", s.settings.getPublic()));
 }
